@@ -4,7 +4,286 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>할 일 달력</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+:root {
+  --primary: #4f46e5;
+  --primary-dark: #4338ca;
+  --bg: #f5f6fb;
+  --card: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --danger: #dc2626;
+  --holiday: #e11d48;
+  --sat: #2563eb;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Pretendard", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.hidden { display: none !important; }
+.muted { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 16px 8px;
+}
+.topbar h1 { margin: 0; font-size: 26px; color: var(--primary-dark); }
+.user-area { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+
+.container { max-width: 860px; margin: 0 auto; padding: 8px 16px 48px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.card h2 { margin: 0 0 12px; font-size: 18px; }
+
+button { font: inherit; cursor: pointer; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
+
+.btn-secondary {
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.btn-secondary:hover { background: #f3f4f6; }
+
+button:focus-visible, input:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+input[type="email"], input[type="password"], input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  margin-top: 4px;
+}
+
+.message {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #ecfdf5;
+  color: #065f46;
+  font-size: 14px;
+}
+.message.error { background: #fef2f2; color: var(--danger); }
+
+/* 로그인 / 회원가입 */
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.tab {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--muted);
+  font-weight: 600;
+}
+.tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.form label { display: block; margin-bottom: 12px; font-size: 14px; }
+.form .btn-primary { width: 100%; }
+
+/* 달력 */
+.cal-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.cal-header h2 { margin: 0; text-align: center; }
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.weekday { text-align: center; font-size: 13px; color: var(--muted); padding: 6px 0; font-weight: 600; }
+.weekday.sun, .day.sun .num, .day.holiday .num { color: var(--holiday); }
+.weekday.sat, .day.sat .num { color: var(--sat); }
+
+.day {
+  min-height: 74px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--text);
+}
+.day:hover { background: #f3f4f6; }
+.day.empty { border: none; background: transparent; cursor: default; }
+.day.today { border-color: var(--primary); }
+.day.selected { background: #eef2ff; border: 2px solid var(--primary); padding: 5px; }
+.day .num { font-weight: 700; font-size: 14px; }
+.day .hname { font-size: 11px; color: var(--holiday); line-height: 1.2; }
+.day .count {
+  margin-top: auto;
+  font-size: 11px;
+  color: #fff;
+  background: var(--primary);
+  border-radius: 999px;
+  padding: 1px 6px;
+  align-self: flex-start;
+}
+
+/* 선택한 날의 할 일 */
+#selected-date { margin-bottom: 4px; }
+.holiday-label { margin: 0 0 12px; color: var(--holiday); font-size: 14px; font-weight: 600; }
+
+.todo-form { display: flex; gap: 8px; margin-bottom: 12px; }
+.todo-form input { margin-top: 0; }
+
+.todo-list { list-style: none; margin: 0; padding: 0; }
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px;
+  border-top: 1px solid var(--border);
+}
+.todo-item:first-child { border-top: none; }
+.todo-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+.todo-title { flex: 1; word-break: break-all; }
+.todo-item.done .todo-title { text-decoration: line-through; color: var(--muted); }
+.btn-delete {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  color: var(--muted);
+}
+.btn-delete:hover { color: var(--danger); border-color: var(--danger); }
+
+.empty { text-align: center; color: var(--muted); padding: 24px 0; margin: 0; }
+
+@media (max-width: 600px) {
+  .card { padding: 14px; }
+  .day { min-height: 52px; padding: 4px; }
+  .day .hname { display: none; }
+  .day .count { font-size: 10px; }
+  .day.selected { padding: 3px; }
+}
+
+/* ---------- 모듈 탭 ---------- */
+.module-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+
+/* ---------- 태양광 계산기 ---------- */
+.solar-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+.solar-group {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.solar-group legend { font-weight: 600; padding: 0 4px; }
+.solar-group label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.solar-group input { padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px; }
+
+.solar-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+.tile {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tile strong { font-size: 17px; }
+
+.solar-details { margin-top: 14px; }
+.solar-details summary { cursor: pointer; font-weight: 600; }
+.table-wrap { overflow-x: auto; margin-top: 8px; }
+#solar-table { border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+#solar-table th, #solar-table td { border-bottom: 1px solid #e5e7eb; padding: 4px 8px; text-align: right; }
+#solar-table th { background: #f1f5f9; }
+.small { font-size: 12px; margin-top: 10px; }
+
+/* ---------- 커리어 ---------- */
+.career-form { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.career-form input[type="text"] { flex: 1 1 200px; }
+.career-form input, .career-form select, .deal-form input, .deal-form textarea, .deal-search {
+  padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px; font-family: inherit;
+}
+.career-form #log-min { width: 80px; }
+.inline { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+.goal-list, .deal-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.goal-item { border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; }
+.goal-top { display: flex; align-items: center; gap: 8px; }
+.goal-top strong { flex: 1; }
+.dday { font-size: 13px; font-weight: 700; color: var(--primary); }
+.goal-progress { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.goal-progress input { flex: 1; }
+.goal-progress span { width: 44px; text-align: right; font-weight: 600; }
+.deal-form { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 14px; }
+.deal-search { width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+.deal-item { border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; }
+.deal-item summary { cursor: pointer; font-weight: 600; }
+.deal-item p { margin: 8px 0 0; white-space: pre-wrap; }
+.deal-item a { display: inline-block; margin: 8px 12px 0 0; }
+.deal-item .btn-delete { margin-top: 8px; }
+
+/* ---------- KSP 과제 ---------- */
+.ksp-item summary { display: block; }
+.ksp-item.done { opacity: 0.6; }
+.ksp-meta { color: #6b7280; font-size: 13px; }
+.ksp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin: 10px 0; }
+.ksp-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #6b7280; }
+.ksp-grid .wide { grid-column: 1 / -1; }
+.ksp-grid select, .ksp-grid input { padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px; color: inherit; }
+.ksp-sub { font-size: 15px; margin: 12px 0 6px; }
+</style>
 </head>
 <body>
   <header class="topbar">
@@ -54,6 +333,10 @@
 
     <!-- 달력과 할 일 -->
     <div id="app-section" class="hidden">
+      <nav id="module-tabs" class="module-tabs hidden"></nav>
+
+      <!-- 모듈: 할 일 달력 -->
+      <div id="mod-calendar" class="module">
       <section class="card">
         <div class="cal-header">
           <button id="prev-btn" class="btn-secondary" type="button" aria-label="이전 달">&lt;</button>
@@ -74,9 +357,1389 @@
         <ul id="todo-list" class="todo-list"></ul>
         <p id="empty-message" class="empty hidden">이 날짜에 등록된 할 일이 없습니다. 위에서 추가해 보세요.</p>
       </section>
+      </div>
+
+      <!-- 모듈: 태양광 계산기 -->
+      <div id="mod-solar" class="module hidden"></div>
+
+      <!-- 모듈: 커리어 대시보드 -->
+      <div id="mod-career" class="module hidden"></div>
+
+      <!-- 모듈: KSP 과제 공유 트래커 -->
+      <div id="mod-ksp" class="module hidden"></div>
     </div>
   </main>
 
-  <script type="module" src="app.js"></script>
+  <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
+  signInWithEmailAndPassword, signOut, updateProfile,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, collection, query, where, getDocs, addDoc, updateDoc, deleteDoc,
+  doc, getDoc, setDoc, onSnapshot, arrayUnion,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ===== Firebase 설정 =====
+// Firebase 콘솔 > 프로젝트 설정 > 내 앱(웹: todo)에서 가져온 값입니다.
+// 이 값은 브라우저에 공개되는 웹 설정값이라 비밀번호가 아닙니다.
+// 데이터 보호는 Firestore 보안 규칙이 담당합니다.
+const firebaseConfig = {
+  apiKey: "AIzaSyBt9Bangm-5IqMKnvkwIJtMbpFJVGwAVAM",
+  authDomain: "todoapp-41f4b.firebaseapp.com",
+  projectId: "todoapp-41f4b",
+  storageBucket: "todoapp-41f4b.firebasestorage.app",
+  messagingSenderId: "715703015424",
+  appId: "1:715703015424:web:44a5940cf0e49a0517a0e5",
+};
+
+// ===== 태양광 계산기 =====
+const { initSolar } = (() => {
+// 기본값은 화면을 채우기 위한 예시값입니다. 실제 사업 숫자로 바꿔서 쓰세요.
+const DEFAULTS = {
+  mw: 1, // 설비용량 (MW)
+  cf: 15, // 이용률 (%)
+  deg: 0.5, // 연간 효율 저하 (%)
+  life: 20, // 사업기간 (년)
+  smp: 130, // SMP (원/kWh)
+  rec: 70000, // REC 가격 (원/REC, 1 REC = 1 MWh)
+  weight: 1.0, // REC 가중치
+  capex: 13, // 총사업비 (억원)
+  om: 0.2, // 1년차 운영비 (억원/년)
+  infl: 2, // 운영비 상승률 (%/년)
+  debtRatio: 70, // 차입 비율 (%)
+  rate: 5.5, // 대출 금리 (%)
+  tenor: 15, // 대출 기간 (년, 원리금균등상환)
+  tax: 20.9, // 법인세율 (지방세 포함, %)
+  disc: 6, // LCOE 할인율 (%)
+};
+
+const GROUPS = [
+  {
+    title: "발전",
+    fields: [
+      ["mw", "설비용량", "MW", "0.1"],
+      ["cf", "이용률", "%", "0.1"],
+      ["deg", "연간 효율 저하", "%", "0.1"],
+      ["life", "사업기간", "년", "1"],
+    ],
+  },
+  {
+    title: "수익",
+    fields: [
+      ["smp", "SMP", "원/kWh", "1"],
+      ["rec", "REC 가격", "원/REC", "100"],
+      ["weight", "REC 가중치", "", "0.1"],
+    ],
+  },
+  {
+    title: "비용",
+    fields: [
+      ["capex", "총사업비", "억원", "0.1"],
+      ["om", "1년차 운영비", "억원/년", "0.01"],
+      ["infl", "운영비 상승률", "%/년", "0.1"],
+    ],
+  },
+  {
+    title: "금융·세금",
+    fields: [
+      ["debtRatio", "차입 비율", "%", "1"],
+      ["rate", "대출 금리", "%", "0.1"],
+      ["tenor", "대출 기간", "년", "1"],
+      ["tax", "법인세율", "%", "0.1"],
+      ["disc", "LCOE 할인율", "%", "0.1"],
+    ],
+  },
+];
+
+// 현금흐름 배열의 IRR (이분법). 부호가 바뀌지 않으면 null.
+function irr(cfs) {
+  const npv = (r) => cfs.reduce((s, cf, t) => s + cf / Math.pow(1 + r, t), 0);
+  let lo = -0.99;
+  let hi = 1;
+  let fLo = npv(lo);
+  if (fLo * npv(hi) > 0) return null;
+  for (let i = 0; i < 200; i++) {
+    const mid = (lo + hi) / 2;
+    const fMid = npv(mid);
+    if (Math.abs(fMid) < 1e-6) return mid;
+    if (fLo * fMid < 0) hi = mid;
+    else {
+      lo = mid;
+      fLo = fMid;
+    }
+  }
+  return (lo + hi) / 2;
+}
+
+function calcSolar(p) {
+  const life = Math.max(1, Math.round(p.life));
+  const tenor = Math.min(life, Math.max(0, Math.round(p.tenor)));
+  const capexWon = p.capex * 1e8;
+  const debt = capexWon * (p.debtRatio / 100);
+  const equity = capexWon - debt;
+  const r = p.rate / 100;
+  const pmt = tenor === 0 || debt === 0 ? 0 : r === 0 ? debt / tenor : (debt * r) / (1 - Math.pow(1 + r, -tenor));
+  const price = p.smp + (p.rec * p.weight) / 1000; // 원/kWh
+  const dep = capexWon / life; // 정액 감가상각
+  const taxRate = p.tax / 100;
+  const d = p.disc / 100;
+
+  let balance = debt;
+  let pvCost = capexWon;
+  let pvGen = 0;
+  const years = [];
+  const projectCF = [-capexWon];
+  const equityCF = [-equity];
+
+  for (let y = 1; y <= life; y++) {
+    const gen = p.mw * 1000 * 8760 * (p.cf / 100) * Math.pow(1 - p.deg / 100, y - 1); // kWh
+    const revenue = gen * price;
+    const opex = p.om * 1e8 * Math.pow(1 + p.infl / 100, y - 1);
+    const ebitda = revenue - opex;
+
+    const debtService = y <= tenor ? pmt : 0;
+    const interest = y <= tenor ? balance * r : 0;
+    const principal = debtService - interest;
+    balance = Math.max(0, balance - principal);
+
+    const tax = Math.max(0, ebitda - dep - interest) * taxRate;
+    const cfads = ebitda - tax;
+    const toEquity = cfads - debtService;
+
+    // 프로젝트 IRR은 차입이 없다고 보고 세금을 다시 계산
+    const unleveredTax = Math.max(0, ebitda - dep) * taxRate;
+    projectCF.push(ebitda - unleveredTax);
+    equityCF.push(toEquity);
+
+    pvCost += opex / Math.pow(1 + d, y);
+    pvGen += gen / Math.pow(1 + d, y);
+
+    years.push({
+      y,
+      gen,
+      revenue,
+      opex,
+      ebitda,
+      interest,
+      principal,
+      tax,
+      cfads,
+      toEquity,
+      dscr: debtService > 0 ? cfads / debtService : null,
+    });
+  }
+
+  const dscrs = years.map((x) => x.dscr).filter((x) => x !== null);
+  return {
+    price,
+    debt,
+    equity,
+    years,
+    lcoe: pvGen > 0 ? pvCost / pvGen : null,
+    projectIrr: irr(projectCF),
+    equityIrr: equity > 0 ? irr(equityCF) : null,
+    minDscr: dscrs.length ? Math.min(...dscrs) : null,
+    avgDscr: dscrs.length ? dscrs.reduce((s, x) => s + x, 0) / dscrs.length : null,
+  };
+}
+
+const won = (v) => Math.round(v).toLocaleString("ko-KR");
+const eok = (v) => (v / 1e8).toLocaleString("ko-KR", { maximumFractionDigits: 2 });
+const pct = (v) => (v === null ? "계산 불가" : `${(v * 100).toFixed(2)}%`);
+const times = (v) => (v === null ? "-" : `${v.toFixed(2)}x`);
+
+function template() {
+  const groups = GROUPS.map(
+    (g) => `
+      <fieldset class="solar-group">
+        <legend>${g.title}</legend>
+        ${g.fields
+          .map(
+            ([key, label, unit, step]) => `
+          <label>${label}${unit ? ` <span class="muted">(${unit})</span>` : ""}
+            <input type="number" data-key="${key}" step="${step}">
+          </label>`
+          )
+          .join("")}
+      </fieldset>`
+  ).join("");
+
+  return `
+    <section class="card">
+      <h2>태양광 사업성 계산기</h2>
+      <p class="muted">값을 바꾸면 결과가 바로 다시 계산됩니다. 기본값은 예시값입니다.</p>
+      <form id="solar-form" class="solar-form">${groups}</form>
+      <button id="solar-reset" class="btn-secondary" type="button">기본값으로</button>
+    </section>
+
+    <section class="card">
+      <h2>결과</h2>
+      <div id="solar-summary" class="solar-summary"></div>
+      <details class="solar-details">
+        <summary>연도별 현금흐름 보기 (단위: 억원)</summary>
+        <div class="table-wrap"><table id="solar-table"></table></div>
+      </details>
+      <p class="muted small">
+        단순화 가정: 판매단가 고정, 정액 감가상각, 결손금 이월 없음, 원리금균등상환, 잔존가치·철거비 없음.
+        LCOE는 세전 기준(총사업비+운영비 현재가치 ÷ 발전량 현재가치)입니다.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>시나리오 저장</h2>
+      <form id="solar-save-form" class="todo-form">
+        <input id="solar-name" type="text" placeholder="시나리오 이름 (예: 영암 3MW 고정가격)" maxlength="40" required>
+        <button class="btn-primary" type="submit">저장</button>
+      </form>
+      <ul id="solar-list" class="todo-list"></ul>
+      <p id="solar-empty" class="empty hidden">저장한 시나리오가 없습니다.</p>
+    </section>`;
+}
+
+function initSolar(container, db, user, showMessage) {
+  container.innerHTML = template();
+  const form = container.querySelector("#solar-form");
+  const inputs = [...form.querySelectorAll("input[data-key]")];
+
+  const read = () =>
+    Object.fromEntries(inputs.map((i) => [i.dataset.key, Number(i.value) || 0]));
+
+  const fill = (params) => {
+    inputs.forEach((i) => {
+      i.value = params[i.dataset.key] ?? DEFAULTS[i.dataset.key];
+    });
+  };
+
+  const render = () => {
+    const res = calcSolar(read());
+    const y1 = res.years[0];
+    const tiles = [
+      ["1년차 발전량", `${won(y1.gen / 1000)} MWh`],
+      ["판매단가 (SMP+REC)", `${res.price.toFixed(1)} 원/kWh`],
+      ["1년차 매출", `${eok(y1.revenue)} 억원`],
+      ["LCOE", res.lcoe === null ? "-" : `${res.lcoe.toFixed(1)} 원/kWh`],
+      ["Project IRR (세후·무차입)", pct(res.projectIrr)],
+      ["Equity IRR (세후)", pct(res.equityIrr)],
+      ["최소 DSCR", times(res.minDscr)],
+      ["평균 DSCR", times(res.avgDscr)],
+      ["대출금 / 자기자본", `${eok(res.debt)} / ${eok(res.equity)} 억원`],
+    ];
+    container.querySelector("#solar-summary").innerHTML = tiles
+      .map(([k, v]) => `<div class="tile"><span class="muted">${k}</span><strong>${v}</strong></div>`)
+      .join("");
+
+    const head = ["연도", "발전량(MWh)", "매출", "운영비", "EBITDA", "이자", "원금", "법인세", "CFADS", "주주몫", "DSCR"];
+    const rows = res.years.map(
+      (x) =>
+        `<tr><td>${x.y}</td><td>${won(x.gen / 1000)}</td><td>${eok(x.revenue)}</td><td>${eok(x.opex)}</td>` +
+        `<td>${eok(x.ebitda)}</td><td>${eok(x.interest)}</td><td>${eok(x.principal)}</td><td>${eok(x.tax)}</td>` +
+        `<td>${eok(x.cfads)}</td><td>${eok(x.toEquity)}</td><td>${times(x.dscr)}</td></tr>`
+    );
+    container.querySelector("#solar-table").innerHTML =
+      `<thead><tr>${head.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody>`;
+  };
+
+  // 저장한 시나리오 목록
+  let scenarios = [];
+
+  const renderList = () => {
+    const list = container.querySelector("#solar-list");
+    list.innerHTML = "";
+    scenarios.forEach((s) => {
+      const li = document.createElement("li");
+      li.className = "todo-item";
+
+      const title = document.createElement("span");
+      title.className = "todo-title";
+      title.textContent = s.name;
+
+      const load = document.createElement("button");
+      load.type = "button";
+      load.className = "btn-secondary";
+      load.textContent = "불러오기";
+      load.addEventListener("click", () => {
+        fill(s.params);
+        render();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "btn-delete";
+      del.textContent = "삭제";
+      del.addEventListener("click", async () => {
+        if (!confirm(`'${s.name}' 시나리오를 삭제할까요?`)) return;
+        try {
+          await deleteDoc(doc(db, "solarScenarios", s.id));
+        } catch (err) {
+          showMessage("삭제하지 못했습니다. 다시 시도해 주세요.", true);
+        }
+        await loadList();
+      });
+
+      li.append(title, load, del);
+      list.appendChild(li);
+    });
+    container.querySelector("#solar-empty").classList.toggle("hidden", scenarios.length > 0);
+  };
+
+  const loadList = async () => {
+    try {
+      const snap = await getDocs(query(collection(db, "solarScenarios"), where("uid", "==", user.uid)));
+      scenarios = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    } catch (err) {
+      showMessage("저장한 시나리오를 불러오지 못했습니다.", true);
+    }
+    renderList();
+  };
+
+  form.addEventListener("input", render);
+  container.querySelector("#solar-reset").addEventListener("click", () => {
+    fill(DEFAULTS);
+    render();
+  });
+
+  container.querySelector("#solar-save-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = container.querySelector("#solar-name").value.trim();
+    if (!name) return;
+    try {
+      await addDoc(collection(db, "solarScenarios"), {
+        uid: user.uid,
+        name,
+        params: read(),
+        createdAt: Date.now(),
+      });
+      container.querySelector("#solar-name").value = "";
+    } catch (err) {
+      showMessage("저장하지 못했습니다. 다시 시도해 주세요.", true);
+    }
+    await loadList();
+  });
+
+  fill(DEFAULTS);
+  render();
+  loadList();
+}
+return { initSolar };
+})();
+
+// ===== 커리어 대시보드 =====
+const { initCareer } = (() => {
+const pad = (n) => String(n).padStart(2, "0");
+const toKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const todayKey = () => toKey(new Date());
+
+// 이번 주 월요일~일요일 날짜 키
+function weekRange() {
+  const now = new Date();
+  const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+  const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
+  return [toKey(mon), toKey(sun)];
+}
+
+function dday(deadline) {
+  if (!deadline) return "";
+  const [y, m, d] = deadline.split("-").map(Number);
+  const now = new Date();
+  const diff = Math.round((new Date(y, m - 1, d) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+  if (diff === 0) return "D-day";
+  return diff > 0 ? `D-${diff}` : `D+${-diff}`;
+}
+
+const hours = (min) => `${(min / 60).toFixed(1)}시간`;
+
+function template() {
+  return `
+    <section class="card">
+      <h2>목표</h2>
+      <form id="goal-form" class="career-form">
+        <input id="goal-title" type="text" placeholder="목표 (예: PF 부서 이동, FAR 합격)" maxlength="50" required>
+        <label class="inline">마감 <input id="goal-deadline" type="date"></label>
+        <button class="btn-primary" type="submit">추가</button>
+      </form>
+      <ul id="goal-list" class="goal-list"></ul>
+      <p id="goal-empty" class="empty hidden">목표를 추가해 보세요.</p>
+    </section>
+
+    <section class="card">
+      <h2>공부 시간 기록</h2>
+      <form id="log-form" class="career-form">
+        <select id="log-goal" required></select>
+        <input id="log-date" type="date" required>
+        <input id="log-min" type="number" min="5" step="5" placeholder="분" required>
+        <button class="btn-primary" type="submit">기록</button>
+      </form>
+      <div id="week-summary" class="solar-summary"></div>
+      <details class="solar-details">
+        <summary>최근 기록 보기</summary>
+        <ul id="log-list" class="todo-list"></ul>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>PF 딜 노트</h2>
+      <form id="deal-form" class="deal-form">
+        <input id="deal-name" type="text" placeholder="딜 이름 (예: ○○ 해상풍력 1GW)" maxlength="80" required>
+        <input id="deal-sponsor" type="text" placeholder="스폰서 / 대주단" maxlength="120">
+        <textarea id="deal-structure" rows="2" placeholder="금융구조 (규모, 부채비율, 만기, 보증 등)"></textarea>
+        <textarea id="deal-offtake" rows="2" placeholder="수익계약 (PPA·CfD·고정가격 등, 상대방, 기간)"></textarea>
+        <textarea id="deal-risk" rows="2" placeholder="핵심 리스크와 대응"></textarea>
+        <textarea id="deal-takeaway" rows="2" placeholder="배운 점 / 내 생각"></textarea>
+        <input id="deal-link" type="url" placeholder="출처 링크 (선택)">
+        <button class="btn-primary" type="submit">노트 저장</button>
+      </form>
+      <input id="deal-search" class="deal-search" type="search" placeholder="노트 검색 (딜명·스폰서·내용)">
+      <ul id="deal-list" class="deal-list"></ul>
+      <p id="deal-empty" class="empty hidden">저장한 딜 노트가 없습니다.</p>
+    </section>`;
+}
+
+function initCareer(container, db, user, showMessage) {
+  container.innerHTML = template();
+  const $c = (sel) => container.querySelector(sel);
+  const data = { goals: [], logs: [], deals: [] };
+
+  const load = async (name) => {
+    const snap = await getDocs(query(collection(db, name), where("uid", "==", user.uid)));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  };
+
+  async function refresh() {
+    try {
+      const [goals, logs, deals] = await Promise.all([load("careerGoals"), load("studyLogs"), load("dealNotes")]);
+      data.goals = goals.sort((a, b) => (a.deadline || "9999").localeCompare(b.deadline || "9999"));
+      data.logs = logs.sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt || 0) - (a.createdAt || 0));
+      data.deals = deals.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    } catch (err) {
+      showMessage("커리어 데이터를 불러오지 못했습니다.", true);
+    }
+    renderGoals();
+    renderLogs();
+    renderDeals();
+  }
+
+  async function run(action, failText) {
+    try {
+      await action();
+    } catch (err) {
+      showMessage(failText, true);
+    }
+    await refresh();
+  }
+
+  // ---------- 목표 ----------
+  function renderGoals() {
+    const list = $c("#goal-list");
+    list.innerHTML = "";
+    data.goals.forEach((g) => {
+      const li = document.createElement("li");
+      li.className = "goal-item";
+
+      const top = document.createElement("div");
+      top.className = "goal-top";
+      const title = document.createElement("strong");
+      title.textContent = g.title;
+      const badge = document.createElement("span");
+      badge.className = "dday";
+      badge.textContent = dday(g.deadline);
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "btn-delete";
+      del.textContent = "삭제";
+      del.addEventListener("click", () => {
+        if (!confirm(`'${g.title}' 목표를 삭제할까요? (공부 기록은 남습니다)`)) return;
+        run(() => deleteDoc(doc(db, "careerGoals", g.id)), "삭제하지 못했습니다.");
+      });
+      top.append(title, badge, del);
+
+      const row = document.createElement("div");
+      row.className = "goal-progress";
+      const range = document.createElement("input");
+      range.type = "range";
+      range.min = "0";
+      range.max = "100";
+      range.step = "5";
+      range.value = g.progress || 0;
+      const label = document.createElement("span");
+      label.textContent = `${range.value}%`;
+      range.addEventListener("input", () => { label.textContent = `${range.value}%`; });
+      range.addEventListener("change", () =>
+        run(() => updateDoc(doc(db, "careerGoals", g.id), { progress: Number(range.value) }), "진행률을 저장하지 못했습니다.")
+      );
+      row.append(range, label);
+
+      li.append(top, row);
+      list.appendChild(li);
+    });
+    $c("#goal-empty").classList.toggle("hidden", data.goals.length > 0);
+
+    // 공부 기록 폼의 목표 선택지
+    const sel = $c("#log-goal");
+    const prev = sel.value;
+    sel.innerHTML = `<option value="">목표 선택</option>` +
+      data.goals.map((g) => `<option value="${g.id}"></option>`).join("");
+    [...sel.options].slice(1).forEach((o, i) => { o.textContent = data.goals[i].title; });
+    sel.value = data.goals.some((g) => g.id === prev) ? prev : "";
+  }
+
+  $c("#goal-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const title = $c("#goal-title").value.trim();
+    if (!title) return;
+    const deadline = $c("#goal-deadline").value;
+    e.target.reset();
+    run(() => addDoc(collection(db, "careerGoals"), { uid: user.uid, title, deadline, progress: 0, createdAt: Date.now() }),
+      "목표를 추가하지 못했습니다.");
+  });
+
+  // ---------- 공부 시간 ----------
+  const goalTitle = (id) => (data.goals.find((g) => g.id === id) || {}).title || "(삭제된 목표)";
+
+  function renderLogs() {
+    const [from, to] = weekRange();
+    const week = data.logs.filter((l) => l.date >= from && l.date <= to);
+    const total = week.reduce((s, l) => s + l.minutes, 0);
+    const byGoal = {};
+    week.forEach((l) => { byGoal[l.goalId] = (byGoal[l.goalId] || 0) + l.minutes; });
+
+    const tiles = [[`이번 주 합계 (${from.slice(5)}~${to.slice(5)})`, hours(total)]]
+      .concat(Object.entries(byGoal).map(([id, m]) => [goalTitle(id), hours(m)]));
+    const box = $c("#week-summary");
+    box.innerHTML = "";
+    tiles.forEach(([k, v]) => {
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      const name = document.createElement("span");
+      name.className = "muted";
+      name.textContent = k;
+      const val = document.createElement("strong");
+      val.textContent = v;
+      tile.append(name, val);
+      box.appendChild(tile);
+    });
+
+    const list = $c("#log-list");
+    list.innerHTML = "";
+    data.logs.slice(0, 30).forEach((l) => {
+      const li = document.createElement("li");
+      li.className = "todo-item";
+      const text = document.createElement("span");
+      text.className = "todo-title";
+      text.textContent = `${l.date} · ${goalTitle(l.goalId)} · ${l.minutes}분`;
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "btn-delete";
+      del.textContent = "삭제";
+      del.addEventListener("click", () => run(() => deleteDoc(doc(db, "studyLogs", l.id)), "삭제하지 못했습니다."));
+      li.append(text, del);
+      list.appendChild(li);
+    });
+  }
+
+  $c("#log-date").value = todayKey();
+  $c("#log-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const goalId = $c("#log-goal").value;
+    const minutes = Number($c("#log-min").value);
+    const date = $c("#log-date").value;
+    if (!goalId || !minutes || !date) return;
+    $c("#log-min").value = "";
+    run(() => addDoc(collection(db, "studyLogs"), { uid: user.uid, goalId, date, minutes, createdAt: Date.now() }),
+      "기록하지 못했습니다.");
+  });
+
+  // ---------- 딜 노트 ----------
+  const DEAL_FIELDS = [
+    ["sponsor", "스폰서 / 대주단"],
+    ["structure", "금융구조"],
+    ["offtake", "수익계약"],
+    ["risk", "리스크"],
+    ["takeaway", "배운 점"],
+  ];
+
+  function renderDeals() {
+    const q = $c("#deal-search").value.trim().toLowerCase();
+    const items = data.deals.filter((d) =>
+      !q || [d.name, ...DEAL_FIELDS.map(([k]) => d[k])].join(" ").toLowerCase().includes(q));
+
+    const list = $c("#deal-list");
+    list.innerHTML = "";
+    items.forEach((d) => {
+      const li = document.createElement("li");
+      const det = document.createElement("details");
+      det.className = "deal-item";
+      const sum = document.createElement("summary");
+      sum.textContent = `${d.name}  ·  ${new Date(d.createdAt).toLocaleDateString("ko-KR")}`;
+      det.appendChild(sum);
+
+      DEAL_FIELDS.forEach(([k, label]) => {
+        if (!d[k]) return;
+        const p = document.createElement("p");
+        const b = document.createElement("b");
+        b.textContent = `${label}: `;
+        p.append(b, document.createTextNode(d[k]));
+        det.appendChild(p);
+      });
+      if (d.link && /^https?:\/\//.test(d.link)) {
+        const a = document.createElement("a");
+        a.href = d.link;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.textContent = "출처 열기";
+        det.appendChild(a);
+      }
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "btn-delete";
+      del.textContent = "삭제";
+      del.addEventListener("click", () => {
+        if (!confirm(`'${d.name}' 노트를 삭제할까요?`)) return;
+        run(() => deleteDoc(doc(db, "dealNotes", d.id)), "삭제하지 못했습니다.");
+      });
+      det.appendChild(del);
+
+      li.appendChild(det);
+      list.appendChild(li);
+    });
+    $c("#deal-empty").classList.toggle("hidden", items.length > 0);
+  }
+
+  $c("#deal-search").addEventListener("input", renderDeals);
+  $c("#deal-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const note = { uid: user.uid, createdAt: Date.now(), name: $c("#deal-name").value.trim(), link: $c("#deal-link").value.trim() };
+    DEAL_FIELDS.forEach(([k]) => { note[k] = $c(`#deal-${k}`).value.trim(); });
+    if (!note.name) return;
+    e.target.reset();
+    run(() => addDoc(collection(db, "dealNotes"), note), "노트를 저장하지 못했습니다.");
+  });
+
+  refresh();
+}
+return { initCareer };
+})();
+
+// ===== KSP 과제 공유 트래커 =====
+const { initKsp } = (() => {
+const STAGES = ["발굴·제안", "승인·계약", "착수", "중간보고", "최종보고", "사후관리", "완료"];
+const BALLS = ["우리", "MDB", "컨설팅사", "수원국", "기타"];
+
+function dday(deadline) {
+  if (!deadline) return "";
+  const [y, m, d] = deadline.split("-").map(Number);
+  const now = new Date();
+  const diff = Math.round((new Date(y, m - 1, d) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+  if (diff === 0) return "D-day";
+  return diff > 0 ? `D-${diff}` : `D+${-diff}`;
+}
+
+// 회의 메모 한 줄 = 할 일 하나. 앞의 글머리표(-, *, •, ·, 1., 1))는 지움
+function parseMemo(text) {
+  return text
+    .split(/\r?\n/)
+    .map((l) => l.replace(/^\s*(?:[-*•·▪□○]|\d+[.)])\s*/, "").trim())
+    .filter((l) => l.length > 0)
+    .map((l) => l.slice(0, 200));
+}
+
+const el = (tag, props = {}, ...children) => {
+  const node = document.createElement(tag);
+  Object.assign(node, props);
+  node.append(...children);
+  return node;
+};
+
+const select = (options, value, onChange) => {
+  const s = el("select");
+  options.forEach(([v, label]) => s.appendChild(el("option", { value: v, textContent: label })));
+  s.value = value || "";
+  s.addEventListener("change", () => onChange(s.value));
+  return s;
+};
+
+function initKsp(container, db, user, showMessage) {
+  const myName = user.displayName || user.email;
+  let workspaces = [];
+  let wsId = "";
+  let projects = [];
+  let actions = [];
+  let ballFilter = "";
+  const openIds = new Set();
+  let unsubs = [];
+
+  const stopListening = () => {
+    unsubs.forEach((u) => u());
+    unsubs = [];
+  };
+
+  const safe = async (action, failText) => {
+    try {
+      await action();
+    } catch (err) {
+      showMessage(failText, true);
+    }
+  };
+
+  const ws = () => workspaces.find((w) => w.id === wsId);
+  const memberOptions = () =>
+    [["", "담당자 없음"]].concat((ws()?.members || []).map((uid) => [uid, ws().memberNames?.[uid] || "멤버"]));
+
+  // ---------- 공유 공간 목록 ----------
+  async function loadWorkspaces() {
+    try {
+      const snap = await getDocs(query(collection(db, "workspaces"), where("members", "array-contains", user.uid)));
+      workspaces = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    } catch (err) {
+      showMessage("공유 공간을 불러오지 못했습니다.", true);
+    }
+    if (!workspaces.some((w) => w.id === wsId)) wsId = workspaces[0]?.id || "";
+    listen();
+    render();
+  }
+
+  // 선택한 공간의 과제와 할 일을 실시간으로 받음 (다른 사람이 고쳐도 바로 반영)
+  function listen() {
+    stopListening();
+    projects = [];
+    actions = [];
+    if (!wsId) return;
+    const base = doc(db, "workspaces", wsId);
+    unsubs.push(
+      // 공간 정보(멤버 목록)도 실시간으로: 누가 참여하면 담당자 목록에 바로 추가됨
+      onSnapshot(base, (snap) => {
+        if (!snap.exists()) return;
+        workspaces = workspaces.map((w) => (w.id === snap.id ? { id: snap.id, ...snap.data() } : w));
+        render();
+      }),
+      onSnapshot(collection(base, "projects"), (snap) => {
+        projects = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        render();
+      }, () => showMessage("과제 목록을 불러오지 못했습니다.", true)),
+      onSnapshot(collection(base, "actions"), (snap) => {
+        actions = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+        render();
+      }, () => showMessage("할 일 목록을 불러오지 못했습니다.", true))
+    );
+  }
+
+  // ---------- 화면 ----------
+  function render() {
+    container.innerHTML = "";
+    container.append(renderSpaceCard());
+    if (!wsId) return;
+    container.append(renderAddCard(), renderBoard());
+  }
+
+  function renderSpaceCard() {
+    const card = el("section", { className: "card" }, el("h2", { textContent: "KSP 과제 공유 공간" }));
+
+    if (workspaces.length) {
+      if (workspaces.length > 1) {
+        card.append(select(workspaces.map((w) => [w.id, w.name]), wsId, (v) => {
+          wsId = v;
+          listen();
+          render();
+        }));
+      }
+      const w = ws();
+      const names = w.members.map((uid) => w.memberNames?.[uid] || "멤버").join(", ");
+      const copy = el("button", { type: "button", className: "btn-secondary", textContent: "참여 코드 복사" });
+      copy.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(w.id);
+          showMessage("참여 코드를 복사했습니다. 함께 쓸 사람에게 전달하세요.");
+        } catch (err) {
+          prompt("이 코드를 복사해서 전달하세요", w.id);
+        }
+      });
+      card.append(
+        el("p", { className: "muted", textContent: `${w.name} · 멤버: ${names}` }),
+        copy
+      );
+    } else {
+      card.append(el("p", { className: "muted", textContent: "함께 쓸 공간을 새로 만들거나, 받은 참여 코드로 들어가세요." }));
+    }
+
+    // 새 공간 만들기
+    const nameInput = el("input", { type: "text", placeholder: "새 공간 이름 (예: KSP팀 과제)", maxLength: 40, required: true });
+    const createForm = el("form", { className: "career-form" }, nameInput,
+      el("button", { type: "submit", className: "btn-primary", textContent: "만들기" }));
+    createForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = nameInput.value.trim();
+      if (!name) return;
+      await safe(async () => {
+        const ref = await addDoc(collection(db, "workspaces"), {
+          name,
+          createdBy: user.uid,
+          members: [user.uid],
+          memberNames: { [user.uid]: myName },
+          createdAt: Date.now(),
+        });
+        wsId = ref.id;
+      }, "공간을 만들지 못했습니다.");
+      await loadWorkspaces();
+    });
+
+    // 참여 코드로 들어가기
+    const codeInput = el("input", { type: "text", placeholder: "참여 코드", required: true });
+    const joinForm = el("form", { className: "career-form" }, codeInput,
+      el("button", { type: "submit", className: "btn-secondary", textContent: "참여" }));
+    joinForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const code = codeInput.value.trim();
+      if (!code) return;
+      if (workspaces.some((w) => w.id === code)) {
+        wsId = code;
+        listen();
+        render();
+        return;
+      }
+      await safe(async () => {
+        await updateDoc(doc(db, "workspaces", code), {
+          members: arrayUnion(user.uid),
+          [`memberNames.${user.uid}`]: myName,
+        });
+        wsId = code;
+      }, "참여하지 못했습니다. 코드를 확인해 주세요.");
+      await loadWorkspaces();
+    });
+
+    const more = el("details", { className: "solar-details" },
+      el("summary", { textContent: workspaces.length ? "다른 공간 만들기 / 참여하기" : "공간 만들기 / 참여하기" }),
+      createForm, joinForm);
+    if (!workspaces.length) more.open = true;
+    card.append(more);
+    return card;
+  }
+
+  function renderAddCard() {
+    const name = el("input", { type: "text", placeholder: "과제명 (예: 키르기즈 스마트물관리)", maxLength: 60, required: true });
+    const deadline = el("input", { type: "date" });
+    const form = el("form", { className: "career-form" }, name,
+      el("label", { className: "inline" }, "마감 ", deadline),
+      el("button", { type: "submit", className: "btn-primary", textContent: "과제 추가" }));
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const n = name.value.trim();
+      if (!n) return;
+      safe(() => addDoc(collection(db, "workspaces", wsId, "projects"), {
+        name: n,
+        stage: STAGES[0],
+        ball: "우리",
+        owner: user.uid,
+        nextAction: "",
+        deadline: deadline.value,
+        createdAt: Date.now(),
+      }), "과제를 추가하지 못했습니다.");
+    });
+    return el("section", { className: "card" }, el("h2", { textContent: "과제 추가" }), form,
+      el("p", { className: "muted small", textContent: "외부 서버에 저장되니 과제명·일정 위주로 적고, 내부 문서 내용은 넣지 마세요." }));
+  }
+
+  function renderBoard() {
+    const card = el("section", { className: "card" }, el("h2", { textContent: "과제 현황" }));
+
+    // 공 위치 필터
+    const chips = el("div", { className: "module-tabs" });
+    [["", "전체"]].concat(BALLS.map((b) => [b, `${b} 차례`])).forEach(([v, label]) => {
+      const count = v ? projects.filter((p) => p.ball === v && p.stage !== "완료").length : projects.length;
+      const chip = el("button", { type: "button", className: "tab" + (ballFilter === v ? " active" : ""), textContent: `${label} ${count}` });
+      chip.addEventListener("click", () => {
+        ballFilter = v;
+        render();
+      });
+      chips.append(chip);
+    });
+    card.append(chips);
+
+    const items = projects
+      .filter((p) => !ballFilter || p.ball === ballFilter)
+      .sort((a, b) =>
+        (a.stage === "완료") - (b.stage === "완료") ||
+        (a.deadline || "9999").localeCompare(b.deadline || "9999"));
+
+    if (!items.length) card.append(el("p", { className: "empty", textContent: "해당하는 과제가 없습니다." }));
+    const list = el("ul", { className: "deal-list" });
+    items.forEach((p) => list.append(renderProject(p)));
+    card.append(list);
+    return card;
+  }
+
+  function renderProject(p) {
+    const ref = doc(db, "workspaces", wsId, "projects", p.id);
+    const save = (patch) => safe(() => updateDoc(ref, patch), "저장하지 못했습니다.");
+    const mine = actions.filter((a) => a.projectId === p.id);
+    const openCount = mine.filter((a) => !a.done).length;
+
+    const det = el("details", { className: "deal-item ksp-item" + (p.stage === "완료" ? " done" : "") });
+    det.open = openIds.has(p.id);
+    det.addEventListener("toggle", () => (det.open ? openIds.add(p.id) : openIds.delete(p.id)));
+
+    det.append(el("summary", {},
+      el("strong", { textContent: p.name }),
+      el("span", { className: "ksp-meta", textContent: ` · ${p.stage} · ${p.ball} 차례` + (openCount ? ` · 할 일 ${openCount}` : "") }),
+      el("span", { className: "dday", textContent: p.deadline ? `  ${dday(p.deadline)}` : "" })));
+
+    // 상태 편집
+    const deadline = el("input", { type: "date", value: p.deadline || "" });
+    deadline.addEventListener("change", () => save({ deadline: deadline.value }));
+    const next = el("input", { type: "text", value: p.nextAction || "", placeholder: "다음 할 일 / 기다리는 것", maxLength: 120 });
+    next.addEventListener("change", () => save({ nextAction: next.value.trim() }));
+
+    det.append(el("div", { className: "ksp-grid" },
+      el("label", {}, "단계", select(STAGES.map((s) => [s, s]), p.stage, (v) => save({ stage: v }))),
+      el("label", {}, "공 위치", select(BALLS.map((b) => [b, b]), p.ball, (v) => save({ ball: v }))),
+      el("label", {}, "담당자", select(memberOptions(), p.owner, (v) => save({ owner: v }))),
+      el("label", {}, "마감", deadline),
+      el("label", { className: "wide" }, "다음 할 일", next)));
+
+    // 할 일 목록
+    const ul = el("ul", { className: "todo-list" });
+    mine.forEach((a) => {
+      const aref = doc(db, "workspaces", wsId, "actions", a.id);
+      const cb = el("input", { type: "checkbox", checked: !!a.done });
+      cb.addEventListener("change", () => safe(() => updateDoc(aref, { done: cb.checked }), "변경하지 못했습니다."));
+      const del = el("button", { type: "button", className: "btn-delete", textContent: "삭제" });
+      del.addEventListener("click", () => safe(() => deleteDoc(aref), "삭제하지 못했습니다."));
+      ul.append(el("li", { className: "todo-item" + (a.done ? " done" : "") }, cb,
+        el("span", { className: "todo-title", textContent: a.text }), del));
+    });
+
+    // 회의 메모 → 할 일
+    const memo = el("textarea", { rows: 3, placeholder: "회의 메모를 붙여넣으면 한 줄이 할 일 하나가 됩니다.\n- EBRD에 착수보고서 일정 회신\n- 컨설팅사 예산안 수정 요청" });
+    const addBtn = el("button", { type: "button", className: "btn-primary", textContent: "할 일로 추가" });
+    addBtn.addEventListener("click", async () => {
+      const lines = parseMemo(memo.value);
+      if (!lines.length) return;
+      openIds.add(p.id);
+      const now = Date.now();
+      await safe(() => Promise.all(lines.map((text, i) =>
+        addDoc(collection(db, "workspaces", wsId, "actions"), {
+          projectId: p.id, text, done: false, createdBy: user.uid, createdAt: now + i,
+        }))), "할 일을 추가하지 못했습니다.");
+      memo.value = "";
+    });
+
+    const delProject = el("button", { type: "button", className: "btn-delete", textContent: "과제 삭제" });
+    delProject.addEventListener("click", async () => {
+      if (!confirm(`'${p.name}' 과제와 딸린 할 일을 모두 삭제할까요?`)) return;
+      await safe(async () => {
+        await Promise.all(mine.map((a) => deleteDoc(doc(db, "workspaces", wsId, "actions", a.id))));
+        await deleteDoc(ref);
+      }, "삭제하지 못했습니다.");
+    });
+
+    det.append(el("h3", { className: "ksp-sub", textContent: "할 일" }), ul,
+      el("div", { className: "deal-form" }, memo, addBtn), delProject);
+    return el("li", {}, det);
+  }
+
+  loadWorkspaces();
+  return stopListening; // 로그아웃할 때 실시간 수신 중단
+}
+return { initKsp };
+})();
+
+// ===== 메인 앱 =====
+const $ = (id) => document.getElementById(id);
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
+// 모듈 목록. 사용자마다 users/{uid} 문서의 modules 배열에 있는 것만 탭으로 보입니다.
+const MODULES = {
+  calendar: { label: "할 일 달력", el: "mod-calendar" },
+  solar: { label: "태양광 계산기", el: "mod-solar", init: initSolar },
+  career: { label: "커리어", el: "mod-career", init: initCareer },
+  ksp: { label: "KSP 과제", el: "mod-ksp", init: initKsp },
+};
+const DEFAULT_MODULES = ["calendar"];
+
+const state = {
+  user: null,
+  year: 0,
+  month: 0, // 0~11
+  selected: "", // YYYY-MM-DD
+  todos: [], // 로그인한 사람의 할 일 전체
+  holidays: {}, // { 2026: { "2026-01-01": "새해" } }
+  modules: [], // 이 사용자에게 켜진 모듈
+  initialized: {}, // 이미 화면을 만든 모듈
+  cleanups: [], // 로그아웃 때 정리할 함수 (실시간 수신 중단 등)
+};
+
+let auth = null;
+let db = null;
+
+const pad = (n) => String(n).padStart(2, "0");
+const dateKey = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}`;
+
+function todayKey() {
+  const now = new Date();
+  return dateKey(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+function showMessage(text, isError = false) {
+  const el = $("message");
+  el.textContent = text;
+  el.classList.toggle("error", isError);
+  el.classList.remove("hidden");
+}
+
+function hideMessage() {
+  $("message").classList.add("hidden");
+}
+
+const ERROR_TEXT = {
+  "auth/invalid-credential": "이메일 또는 비밀번호가 맞지 않습니다.",
+  "auth/invalid-email": "이메일 형식이 올바르지 않습니다.",
+  "auth/email-already-in-use": "이미 가입된 이메일입니다.",
+  "auth/weak-password": "비밀번호는 6자 이상이어야 합니다.",
+  "auth/too-many-requests": "시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.",
+};
+
+function errorText(err) {
+  return ERROR_TEXT[err.code] || "오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+}
+
+function showAuth() {
+  $("auth-section").classList.remove("hidden");
+  $("app-section").classList.add("hidden");
+  $("user-area").classList.add("hidden");
+}
+
+function enterApp() {
+  $("auth-section").classList.add("hidden");
+  $("app-section").classList.remove("hidden");
+  $("user-area").classList.remove("hidden");
+  $("user-nickname").textContent = state.user.displayName || state.user.email;
+}
+
+// users/{uid} 문서를 읽어 켜진 모듈을 가져옵니다. 문서가 없으면 기본값으로 만듭니다.
+async function loadProfile() {
+  const ref = doc(db, "users", state.user.uid);
+  try {
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, {
+        nickname: state.user.displayName || "",
+        email: state.user.email,
+        modules: DEFAULT_MODULES,
+        createdAt: Date.now(),
+      });
+      return DEFAULT_MODULES;
+    }
+    const mods = (snap.data().modules || []).filter((m) => MODULES[m]);
+    return mods.length ? mods : DEFAULT_MODULES;
+  } catch (err) {
+    return DEFAULT_MODULES;
+  }
+}
+
+function renderTabs() {
+  const nav = $("module-tabs");
+  nav.innerHTML = "";
+  state.modules.forEach((key) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "tab";
+    btn.dataset.module = key;
+    btn.textContent = MODULES[key].label;
+    btn.addEventListener("click", () => showModule(key));
+    nav.appendChild(btn);
+  });
+  // 모듈이 하나뿐이면 탭을 숨깁니다.
+  nav.classList.toggle("hidden", state.modules.length < 2);
+}
+
+function showModule(key) {
+  Object.entries(MODULES).forEach(([k, m]) => {
+    $(m.el).classList.toggle("hidden", k !== key);
+  });
+  document.querySelectorAll("#module-tabs .tab").forEach((b) => {
+    b.classList.toggle("active", b.dataset.module === key);
+  });
+  const mod = MODULES[key];
+  if (mod.init && !state.initialized[key]) {
+    const cleanup = mod.init($(mod.el), db, state.user, showMessage);
+    if (typeof cleanup === "function") state.cleanups.push(cleanup);
+    state.initialized[key] = true;
+  }
+}
+
+function switchAuthTab(name) {
+  const isLogin = name === "login";
+  $("tab-login").classList.toggle("active", isLogin);
+  $("tab-signup").classList.toggle("active", !isLogin);
+  $("login-form").classList.toggle("hidden", !isLogin);
+  $("signup-form").classList.toggle("hidden", isLogin);
+  hideMessage();
+}
+
+// 공휴일은 공개 API에서 가져오고, 연도별로 한 번만 받아 둡니다.
+async function loadHolidays(year) {
+  if (state.holidays[year]) return;
+  try {
+    const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/KR`);
+    if (!res.ok) throw new Error("holiday api");
+    const items = await res.json();
+    state.holidays[year] = Object.fromEntries(items.map((i) => [i.date, i.localName]));
+  } catch (err) {
+    showMessage("공휴일 정보를 가져오지 못했습니다. 할 일 기능은 그대로 사용할 수 있습니다.", true);
+  }
+}
+
+// 할 일 전체를 다시 읽고 화면을 그립니다.
+async function loadData() {
+  if (!state.user) return;
+  await loadHolidays(state.year);
+  try {
+    const snap = await getDocs(query(collection(db, "todos"), where("uid", "==", state.user.uid)));
+    state.todos = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+  } catch (err) {
+    showMessage("할 일을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.", true);
+  }
+  renderAll();
+}
+
+function renderAll() {
+  renderCalendar();
+  renderDayPanel();
+}
+
+function renderCalendar() {
+  $("month-title").textContent = `${state.year}년 ${state.month + 1}월`;
+  const grid = $("calendar-grid");
+  grid.innerHTML = "";
+
+  WEEKDAYS.forEach((w, i) => {
+    const head = document.createElement("div");
+    head.className = "weekday" + (i === 0 ? " sun" : i === 6 ? " sat" : "");
+    head.textContent = w;
+    grid.appendChild(head);
+  });
+
+  const holidays = state.holidays[state.year] || {};
+  const counts = {};
+  state.todos.forEach((t) => {
+    counts[t.date] = (counts[t.date] || 0) + 1;
+  });
+
+  const firstDay = new Date(state.year, state.month, 1).getDay();
+  const lastDate = new Date(state.year, state.month + 1, 0).getDate();
+  const today = todayKey();
+
+  for (let i = 0; i < firstDay; i++) {
+    const blank = document.createElement("div");
+    blank.className = "day empty";
+    grid.appendChild(blank);
+  }
+
+  for (let d = 1; d <= lastDate; d++) {
+    const key = dateKey(state.year, state.month, d);
+    const dow = (firstDay + d - 1) % 7;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "day";
+    if (dow === 0) btn.classList.add("sun");
+    if (dow === 6) btn.classList.add("sat");
+    if (holidays[key]) btn.classList.add("holiday");
+    if (key === today) btn.classList.add("today");
+    if (key === state.selected) btn.classList.add("selected");
+
+    const num = document.createElement("span");
+    num.className = "num";
+    num.textContent = d;
+    btn.appendChild(num);
+
+    if (holidays[key]) {
+      const name = document.createElement("span");
+      name.className = "hname";
+      name.textContent = holidays[key];
+      btn.appendChild(name);
+    }
+    if (counts[key]) {
+      const count = document.createElement("span");
+      count.className = "count";
+      count.textContent = `할 일 ${counts[key]}`;
+      btn.appendChild(count);
+    }
+
+    btn.addEventListener("click", () => {
+      state.selected = key;
+      renderAll();
+    });
+    grid.appendChild(btn);
+  }
+}
+
+function renderDayPanel() {
+  const [y, m, d] = state.selected.split("-").map(Number);
+  $("selected-date").textContent = `${y}년 ${m}월 ${d}일 (${WEEKDAYS[new Date(y, m - 1, d).getDay()]})`;
+
+  const holiday = (state.holidays[y] || {})[state.selected];
+  $("selected-holiday").textContent = holiday || "";
+  $("selected-holiday").classList.toggle("hidden", !holiday);
+
+  const list = $("todo-list");
+  list.innerHTML = "";
+  const items = state.todos.filter((t) => t.date === state.selected);
+
+  items.forEach((t) => {
+    const li = document.createElement("li");
+    li.className = "todo-item" + (t.done ? " done" : "");
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = !!t.done;
+    checkbox.addEventListener("change", () => toggleTodo(t.id, checkbox.checked));
+
+    const title = document.createElement("span");
+    title.className = "todo-title";
+    title.textContent = t.title;
+
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "btn-delete";
+    del.textContent = "삭제";
+    del.addEventListener("click", () => deleteTodo(t.id));
+
+    li.append(checkbox, title, del);
+    list.appendChild(li);
+  });
+
+  $("empty-message").classList.toggle("hidden", items.length > 0);
+}
+
+async function toggleTodo(id, done) {
+  try {
+    await updateDoc(doc(db, "todos", id), { done });
+    hideMessage();
+  } catch (err) {
+    showMessage("변경하지 못했습니다. 다시 시도해 주세요.", true);
+  }
+  await loadData();
+}
+
+async function deleteTodo(id) {
+  if (!confirm("이 할 일을 삭제할까요?")) return;
+  try {
+    await deleteDoc(doc(db, "todos", id));
+    hideMessage();
+  } catch (err) {
+    showMessage("삭제하지 못했습니다. 다시 시도해 주세요.", true);
+  }
+  await loadData();
+}
+
+async function moveMonth(step) {
+  const next = new Date(state.year, state.month + step, 1);
+  state.year = next.getFullYear();
+  state.month = next.getMonth();
+  await loadData();
+}
+
+function bindEvents() {
+  $("tab-login").addEventListener("click", () => switchAuthTab("login"));
+  $("tab-signup").addEventListener("click", () => switchAuthTab("signup"));
+
+  $("login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      await signInWithEmailAndPassword(auth, $("login-email").value.trim(), $("login-password").value);
+      e.target.reset();
+      hideMessage();
+    } catch (err) {
+      showMessage(errorText(err), true);
+    }
+  });
+
+  $("signup-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const nickname = $("signup-nickname").value.trim();
+    try {
+      const cred = await createUserWithEmailAndPassword(
+        auth,
+        $("signup-email").value.trim(),
+        $("signup-password").value
+      );
+      await updateProfile(cred.user, { displayName: nickname });
+      e.target.reset();
+      hideMessage();
+      enterApp();
+    } catch (err) {
+      showMessage(errorText(err), true);
+    }
+  });
+
+  $("logout-btn").addEventListener("click", () => signOut(auth));
+
+  $("prev-btn").addEventListener("click", () => moveMonth(-1));
+  $("next-btn").addEventListener("click", () => moveMonth(1));
+  $("today-btn").addEventListener("click", () => {
+    const now = new Date();
+    state.year = now.getFullYear();
+    state.month = now.getMonth();
+    state.selected = todayKey();
+    loadData();
+  });
+
+  $("todo-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const title = $("todo-input").value.trim();
+    if (!title) return;
+    try {
+      await addDoc(collection(db, "todos"), {
+        uid: state.user.uid,
+        title,
+        date: state.selected,
+        done: false,
+        createdAt: Date.now(),
+      });
+      $("todo-input").value = "";
+      hideMessage();
+    } catch (err) {
+      showMessage("추가하지 못했습니다. 다시 시도해 주세요.", true);
+    }
+    await loadData();
+  });
+}
+
+function startApp() {
+  const app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+
+  const now = new Date();
+  state.year = now.getFullYear();
+  state.month = now.getMonth();
+  state.selected = todayKey();
+
+  bindEvents();
+
+  onAuthStateChanged(auth, async (user) => {
+    state.user = user;
+    state.cleanups.forEach((fn) => fn());
+    state.cleanups = [];
+    state.initialized = {};
+    if (user) {
+      enterApp();
+      state.modules = await loadProfile();
+      renderTabs();
+      showModule(state.modules[0]);
+      await loadData();
+    } else {
+      showAuth();
+    }
+  });
+}
+
+startApp();
+</script>
 </body>
 </html>

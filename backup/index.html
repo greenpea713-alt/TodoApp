@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Tasks</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <header class="header">
+        <h1 class="title">My Tasks</h1>
+      </header>
+
+      <!-- 진행률 표시 -->
+      <div class="progress-section">
+        <div class="progress-label" id="progressText">0/0 완료 (0%)</div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressBar"></div>
+        </div>
+      </div>
+
+      <!-- 검색 및 일괄 삭제 -->
+      <div class="utility-bar">
+        <input type="text" id="searchInput" class="search-input" placeholder="할 일 검색...">
+        <button type="button" id="clearCompletedBtn" class="clear-btn">완료된 항목 삭제</button>
+      </div>
+
+      <!-- 카테고리 필터 버튼 -->
+      <div class="filter-group" id="filterGroup">
+        <button type="button" class="filter-btn active" data-filter="all">전체</button>
+        <button type="button" class="filter-btn" data-filter="work">업무</button>
+        <button type="button" class="filter-btn" data-filter="personal">개인</button>
+        <button type="button" class="filter-btn" data-filter="study">공부</button>
+      </div>
+
+      <!-- 할 일 입력 폼 -->
+      <form id="todoForm" class="todo-form">
+        <select id="categorySelect" class="category-select">
+          <option value="work">업무</option>
+          <option value="personal">개인</option>
+          <option value="study">공부</option>
+        </select>
+        <input type="text" id="todoInput" class="todo-input" placeholder="할 일을 입력하세요..." autocomplete="off">
+        <button type="submit" class="add-btn">추가</button>
+      </form>
+
+      <!-- 할 일 목록 & 빈 상태 메시지 -->
+      <ul id="todoList" class="todo-list"></ul>
+      <div id="emptyMessage" class="empty-message" style="display: none;">할 일이 없습니다. 추가해보세요!</div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
