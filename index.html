@@ -3,63 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Tasks</title>
+  <title>할 일 달력</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <header class="header">
-        <h1 class="title">My Tasks</h1>
-      </header>
-
-      <div class="app-layout">
-        <!-- 왼쪽 열: 입력과 진행률 -->
-        <div class="left-col">
-          <!-- 진행률 표시 -->
-          <div class="progress-section">
-            <div class="progress-label" id="progressText">0/0 완료 (0%)</div>
-            <div class="progress-track">
-              <div class="progress-fill" id="progressBar"></div>
-            </div>
-          </div>
-
-          <!-- 할 일 입력 폼 -->
-          <form id="todoForm" class="todo-form">
-            <select id="categorySelect" class="category-select">
-              <option value="work">업무</option>
-              <option value="personal">개인</option>
-              <option value="study">공부</option>
-            </select>
-            <input type="text" id="todoInput" class="todo-input" placeholder="할 일을 입력하세요..." autocomplete="off">
-            <button type="submit" class="add-btn">추가</button>
-          </form>
-        </div>
-
-        <!-- 오른쪽 열: 목록 -->
-        <div class="right-col">
-          <!-- 검색 및 일괄 삭제 -->
-          <div class="utility-bar">
-            <input type="text" id="searchInput" class="search-input" placeholder="할 일 검색...">
-            <button type="button" id="clearCompletedBtn" class="clear-btn">완료된 항목 삭제</button>
-          </div>
-
-          <!-- 카테고리 필터 버튼 -->
-          <div class="filter-group" id="filterGroup">
-            <button type="button" class="filter-btn active" data-filter="all">전체</button>
-            <button type="button" class="filter-btn" data-filter="work">업무</button>
-            <button type="button" class="filter-btn" data-filter="personal">개인</button>
-            <button type="button" class="filter-btn" data-filter="study">공부</button>
-          </div>
-
-          <!-- 할 일 목록 & 빈 상태 메시지 -->
-          <ul id="todoList" class="todo-list"></ul>
-          <div id="emptyMessage" class="empty-message" style="display: none;">할 일이 없습니다. 추가해보세요!</div>
-        </div>
-      </div>
+  <header class="topbar">
+    <div>
+      <h1>할 일 달력</h1>
+      <p class="muted">날짜별로 할 일을 관리하고 공휴일을 함께 확인하세요</p>
     </div>
-  </div>
+    <div id="user-area" class="user-area hidden">
+      <span id="user-nickname"></span>님
+      <button id="logout-btn" class="btn-secondary" type="button">로그아웃</button>
+    </div>
+  </header>
 
-  <script src="script.js"></script>
+  <main class="container">
+    <p id="message" class="message hidden"></p>
+
+    <!-- 로그인 / 회원가입 -->
+    <section id="auth-section" class="card hidden">
+      <div class="tabs">
+        <button id="tab-login" class="tab active" type="button">로그인</button>
+        <button id="tab-signup" class="tab" type="button">회원가입</button>
+      </div>
+
+      <form id="login-form" class="form">
+        <label>이메일
+          <input id="login-email" type="email" required autocomplete="email">
+        </label>
+        <label>비밀번호
+          <input id="login-password" type="password" required autocomplete="current-password">
+        </label>
+        <button class="btn-primary" type="submit">로그인</button>
+      </form>
+
+      <form id="signup-form" class="form hidden">
+        <label>닉네임
+          <input id="signup-nickname" type="text" required maxlength="20" autocomplete="nickname">
+        </label>
+        <label>이메일
+          <input id="signup-email" type="email" required autocomplete="email">
+        </label>
+        <label>비밀번호 (6자 이상)
+          <input id="signup-password" type="password" required minlength="6" autocomplete="new-password">
+        </label>
+        <button class="btn-primary" type="submit">가입하기</button>
+      </form>
+    </section>
+
+    <!-- 달력과 할 일 -->
+    <div id="app-section" class="hidden">
+      <section class="card">
+        <div class="cal-header">
+          <button id="prev-btn" class="btn-secondary" type="button" aria-label="이전 달">&lt;</button>
+          <h2 id="month-title"></h2>
+          <button id="next-btn" class="btn-secondary" type="button" aria-label="다음 달">&gt;</button>
+          <button id="today-btn" class="btn-secondary" type="button">오늘</button>
+        </div>
+        <div id="calendar-grid" class="calendar-grid"></div>
+      </section>
+
+      <section class="card">
+        <h2 id="selected-date"></h2>
+        <p id="selected-holiday" class="holiday-label hidden"></p>
+        <form id="todo-form" class="todo-form">
+          <input id="todo-input" type="text" placeholder="이 날의 할 일을 입력하세요" maxlength="100" required>
+          <button class="btn-primary" type="submit">추가</button>
+        </form>
+        <ul id="todo-list" class="todo-list"></ul>
+        <p id="empty-message" class="empty hidden">이 날짜에 등록된 할 일이 없습니다. 위에서 추가해 보세요.</p>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
